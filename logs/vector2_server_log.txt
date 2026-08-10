@@ -1,0 +1,13 @@
+# Server log from Reachy Mini host machine (192.168.0.23)
+# Captured during Vector 2 testing — 21 July 2026
+# Source IP 192.168.0.25 = attacker machine (separate device, same WiFi)
+# No authentication header on any request — CWE-306 confirmed
+
+INFO: 192.168.0.25:59128 - "GET /api/v1/personalities HTTP/1.1" 200 OK
+INFO: 192.168.0.25:59129 - "GET /api/v1/status HTTP/1.1" 200 OK
+INFO: 192.168.0.25:59129 - "GET /api/v1/voices HTTP/1.1" 200 OK
+INFO: 192.168.0.25:64487 - "POST /api/v1/personalities/save HTTP/1.1" 200 OK
+INFO: 192.168.0.25:65323 - "POST /api/v1/personalities/apply HTTP/1.1" 200 OK
+
+# Outcome: Robot responded in Spanish following the apply request.
+# Personality persisted across application restart (persist=True confirmed).

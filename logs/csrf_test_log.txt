@@ -1,0 +1,10 @@
+# Server log from partial CSRF test (Vector 3b) — 21 July 2026
+# HTML form at http://192.168.0.25:9000/attack.html
+# Form auto-submitted on page load — zero user interaction
+
+INFO: 192.168.0.25:64598 - "POST /api/v1/personalities/save HTTP/1.1" 200 OK
+INFO: 192.168.0.25:64599 - "POST /api/v1/personalities/apply HTTP/1.1" 422 Unprocessable Content
+
+# Save: HTTP 200 — cross-origin form submission accepted. CSRF confirmed for save.
+# Apply: HTTP 422 — Pydantic schema rejected text/plain content type.
+# Full CSRF chain blocked via HTML form. Requires JavaScript fetch() or network-level request.
