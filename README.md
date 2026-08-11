@@ -4,10 +4,7 @@
 
 > Stanley Akingbola, Dan, Yan Lin Aung  
 > University of Derby, Derby, UK  
-> *Proceedings of the 16th International Conference on the Internet of Things (IoT 2026)*  
-> Newcastle upon Tyne, UK, November 2026
-
----
+>
 
 ## Overview
 
@@ -158,11 +155,7 @@ performed on it.
   title     = {Unauthenticated Personality Injection in Embodied AI:
                A Configuration-Layer Attack on LLM-Controlled Social Robots},
   author    = {Akingbola, Stanley and Dan and Aung, Yan Lin},
-  booktitle = {Proceedings of the 16th International Conference on
-               the Internet of Things (IoT 2026)},
-  year      = {2026},
-  address   = {Newcastle upon Tyne, UK},
-  publisher = {ACM}
+  
 }
 ```
 
