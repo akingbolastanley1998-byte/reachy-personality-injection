@@ -1,200 +1,131 @@
 # Network-Exposed Configuration Attacks on LLM-Controlled Social Robots
 
-**Proof-of-Concept Code and Research Artefacts**
+Proof-of-concept code and research artefacts accompanying the paper of the same title.
 
-> Stanley Akingbola, Ugbede Ibrahim, Yan Lin Aung, Quang Dan Le, Hong Qing Yu
-> University of Derby, Derby, UK
->
-> Corresponding authors: Stanley Akingbola (akingbolastanley1998@gmail.com),
-> Yan Lin Aung (y.aung@derby.ac.uk)
+**Authors:** Stanley Akingbola, Ugbede Ibrahim, Yan Lin Aung, Quang Dan Le, Hong Qing Yu
+University of Derby, Derby, UK
 
-## Overview
+Corresponding authors: Stanley Akingbola (akingbolastanley1998@gmail.com), Yan Lin Aung (y.aung@derby.ac.uk)
 
-This repository contains the proof-of-concept code, pipeline modification,
-and evidence artefacts for the paper:
+## Summary
 
-> **"Network-Exposed Configuration Attacks on LLM-Controlled Social Robots"**
+Large language models are increasingly used as the reasoning layer behind physical, consumer-facing robots: they decide what the robot says, how it responds to a person, and in some cases what actions it takes. Almost all existing security research on these systems focuses on the conversational interface itself, treating the LLM's system prompt as fixed and asking whether adversarial input at inference time can override it. This project investigates a different and comparatively unexamined layer: the network-facing configuration interface that supplies that system prompt in the first place, before the model ever processes a single message.
 
-We demonstrate that the Pollen Robotics Reachy Mini Lite exposes two
-entirely unauthenticated API endpoints controlling the robot's AI system
-prompt on a management interface bound to all network interfaces (0.0.0.0:7860).
-Any device on the same WiFi network can replace the robot's AI instructions
-in under two seconds, with no credentials and no LLM interaction.
+Using the Pollen Robotics Reachy Mini Lite as a case study, we show that an attacker who never interacts with the robot's LLM at all can still take full control of what it says and how it behaves. The robot's personality management API, which defines the system prompt sent to the cloud-hosted LLM at the start of every session, is served over a Gradio interface bound to all network interfaces rather than restricted to the local host. Two endpoints on this interface, one that saves a new personality configuration and one that applies it, accept requests from any device on the network with no authentication, no session validation, and no caller verification of any kind. An attacker on the same WiFi network, whether a malicious guest, a compromised device, or another resident on a shared network in a home, school, or care setting, can submit two HTTP requests and silently replace the robot's operating instructions. The change takes effect in under two seconds, persists across application restarts, and produces an observable change in the robot's spoken behaviour on physical hardware, confirmed here by causing the robot to respond in a different language entirely of the attacker's choosing.
 
-**Vulnerability:**
-- CWE-306: Missing Authentication for a Critical Function
-- CWE-1327: Binding to an Unrestricted IP Address
-- CVSS v3.1 Base Score: 6.5 MEDIUM (`CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N`)
-- A second, distinct finding — cross-origin reachability of the `save`
-  endpoint (CWE-352) — is scored separately, also 6.5 MEDIUM.
+Because this attack chain never touches the model's conversational input or output, the robot's inference-time safety alignment is structurally irrelevant to it. Eleven direct prompt-injection attempts against the LLM itself were separately tested and all failed, which is reported here as evidence that the conversational layer was behaving as intended, not as evidence that the system as a whole is secure: the configuration-layer attack bypasses that layer entirely rather than defeating it. A further finding shows that one of the two endpoints is additionally reachable cross-origin, without a CORS preflight check, meaning a victim on the robot's network need only visit an ordinary web page for the same configuration-layer compromise to occur with no network tooling at all. A source-verified survey of 59 public repositories combining the same web frameworks with robotics or embodied-agent code found the identical missing-authentication pattern recurring in the large majority of genuine applications, indicating that this is not an isolated oversight in one product but a structural gap between how these frameworks are typically configured during development and what a consumer deployment actually requires. We refer to this gap, and the point in a product's lifecycle where it opens up, as the deployment gap.
 
-**Responsible Disclosure:**
-Disclosed to Pollen Robotics via private GitHub Security Advisory before
-publication. Secondary notification sent to contact@pollen-robotics.com
-and security@huggingface.co.
+The practical implication is that securing an LLM-controlled robot cannot rely on model-level defences alone. A robot can refuse every adversarial prompt a user sends it and still be fully compromised through the infrastructure that configures it, because the two problems sit at different layers of the system and neither compensates for a failure in the other.
 
----
+| | |
+|---|---|
+| CWE-306 | Missing Authentication for a Critical Function |
+| CWE-1327 | Binding to an Unrestricted IP Address |
+| CVSS v3.1 (main finding) | 6.5 Medium — `AV:A/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N` |
+| CWE-352 (cross-origin `save`) | 6.5 Medium — scored separately |
 
-## Repository Structure
+**Disclosure.** Reported to Pollen Robotics via private GitHub Security Advisory prior to publication, with secondary notice to contact@pollen-robotics.com and security@huggingface.co.
+
+## Repository contents
 
 ```
-├── exploit.py                    # Proof-of-concept exploit (V1/V2 vectors)
-├── pipeline_patch/
-│   └── text_to_text.py           # Text-to-text pipeline modification for Phase 1 testing
-├── phase1_prompts.json           # All 11 Phase 1 prompt injection prompts + results
-├── repository_survey.xlsx        # Full 59-repository classification (Section 8.1.2)
-├── logs/
-│   ├── vector2_server_log.txt    # Server log from Vector 2 (remote Python)
-│   ├── csrf_test_log.txt         # Server log from the cross-origin CSRF test (Vector 3b)
-│   └── vector3_browser_console.txt  # Browser console output from Vector 3
-└── docs/
-    └── reproduction_checklist.md # Step-by-step reproduction guide
+exploit.py                   Proof-of-concept exploit (Vectors 1 and 2)
+pipeline_patch/
+  text_to_text.py            Text-to-text channel added for Phase 1 testing
+phase1_prompts.json          All 11 Phase 1 prompts, categories, and recorded results
+repository_survey.xlsx       Classification of 59 surveyed repositories (Section 8.1.2)
+logs/
+  vector2_server_log.txt     Server log, Vector 2 (remote attacker)
+  csrf_test_log.txt          Server log, cross-origin CSRF test (Vector 3b)
+  vector3_browser_console.txt  Browser console output, Vector 3
+docs/
+  reproduction_checklist.md  Step-by-step reproduction guide
 ```
 
-> **Note:** `repository_survey.xlsx` is referenced by the paper (Section 7,
-> Code Availability) but is not yet present in this repository. It needs to
-> be added before the arXiv version is finalised — see the paper's Section
-> 8.1.2 for what it must contain (the full 59-repository classification,
-> genuine/false-positive justification for every repository, and the
-> per-repository unauthenticated-endpoint finding for all 12 confirmed
-> genuine applications).
+`repository_survey.xlsx` currently records the genuine/false-positive classification of all 59 repositories (12 confirmed genuine) but not yet the per-repository unauthenticated-endpoint findings that the paper's 9/11 and 10/11 figures depend on. That column needs completing before the figures in Section 8.1.2 are fully supported by the released artefact.
 
----
+## Target system
 
-## Target System
+- Robot: Pollen Robotics Reachy Mini Lite
+- Application: `reachy-mini-conversation-app` v0.8.0, commit `81dfd7c`
+- Host: Windows 11 PC
+- Vulnerable endpoints: `POST /api/v1/personalities/save`, `POST /api/v1/personalities/apply`
+- Management interface: Gradio on `0.0.0.0:7860`
 
-- **Robot:** Pollen Robotics Reachy Mini Lite
-- **App:** reachy-mini-conversation-app v0.8.0 (commit 81dfd7c)
-- **Host:** Windows 11 PC
-- **Vulnerable endpoints:**
-  - `POST /api/v1/personalities/save`
-  - `POST /api/v1/personalities/apply`
-- **Management interface:** Gradio on 0.0.0.0:7860 (all interfaces)
+The pinned commit and `/api/v1` path prefix used throughout the paper match this release. The current public `reachy-mini-conversation-app` repository has since changed its route structure and no longer exposes this exact path or commit; the vulnerable request-parsing logic is unchanged in substance as of the v0.8.0 tag, but file and route layout should not be assumed identical.
 
-> The pinned commit and `/api/v1` path prefix used throughout the paper
-> match this release exactly. The current public
-> `reachy-mini-conversation-app` repository has since changed its route
-> structure and no longer exposes this exact path or commit; the
-> vulnerable request-parsing logic is unchanged in substance as of the
-> v0.8.0 tag, but file and route layout should not be assumed identical.
+## Usage
 
----
-
-## Quick Start
-
-### Prerequisites
 ```bash
 pip install requests websockets
 ```
 
-### Vector 1 — Local (co-installed malware simulation)
+Vector 1, local (co-installed malware simulation):
 ```bash
 python exploit.py --target localhost --lang French
 ```
 
-### Vector 2 — Remote WiFi (any device on shared network)
+Vector 2, remote (any device on the same WiFi network):
 ```bash
 python exploit.py --target <ROBOT_HOST_IP> --lang Spanish
 ```
 
-### Vector 3 — Browser Console
-Open F12 developer console on any device on the same WiFi and paste the
-commands from `logs/vector3_browser_console.txt`.
+Vector 3, browser console: open the F12 developer console on any device on the same WiFi network and paste the commands from `logs/vector3_browser_console.txt`.
 
-### Restore Default Personality
+Restore the default personality:
 ```bash
 python exploit.py --target <ROBOT_HOST_IP> --restore
 ```
 
-### Enumerate Endpoints
+Enumerate endpoints:
 ```bash
 python exploit.py --target <ROBOT_HOST_IP> --enumerate
 ```
 
----
+### Text-to-text pipeline modification
 
-## Text-to-Text Pipeline Modification
-
-The `pipeline_patch/text_to_text.py` module adds a text input channel
-to the Reachy Mini conversation app for systematic Phase 1 testing.
+`pipeline_patch/text_to_text.py` adds a text input channel to the conversation app so Phase 1 prompts can be sent and logged systematically, without touching the LLM, system prompt, tool descriptions, memory storage, or management API.
 
 ```bash
-# From the reachy_mini_conversation_app root directory:
+# from the reachy-mini-conversation-app root directory
 python pipeline_patch/text_to_text.py
 
-# Then send prompts:
 curl -X POST http://localhost:8765/chat \
      -H "Content-Type: application/json" \
      -d '{"text": "Hello, what is your name?"}'
 ```
 
----
+## Phase 1 results
 
-## Phase 1 Results Summary
-
-Eleven hand-written prompt-injection attempts were applied; none succeeded
-in producing unauthorised behaviour. This is reported in the paper as a
-**scoped manual control, not an automated adversarial evaluation** — see
-Section 6.1 of the paper. Full prompts and recorded outputs are in
-`phase1_prompts.json`.
+Eleven hand-written prompt-injection attempts were made against the cloud LLM, across the categories below. This is a scoped manual control, not an automated adversarial evaluation; see Section 6.1 of the paper for how the result should be read. Full prompts and recorded outputs are in `phase1_prompts.json`.
 
 | Category | Prompts | Result |
 |---|---|---|
-| False identity acceptance | 3 | All REJECTED |
-| System prompt extraction | 3 | All REJECTED |
-| Safety override | 3 | All REJECTED |
-| Memory corruption (false operator-identity claim) | 2 | 1 REJECTED, 1 PARTIAL (claim stored in memory, no elevated behaviour in-session) |
+| False identity acceptance | 3 | Rejected |
+| System prompt extraction | 3 | Rejected |
+| Safety override | 3 | Rejected |
+| Memory corruption (false operator-identity claim) | 2 | 1 rejected, 1 partial — claim accepted and written to memory, no elevated behaviour observed in-session |
 
-> The paper's methodology (Section 5.5) describes five prompt-injection
-> categories, including a distinct "unauthorised tool invocation (camera
-> access, memory writes)" category. That category is not broken out as a
-> separate top-level entry in `phase1_prompts.json` — worth checking
-> against the paper text before the artefact is finalised.
+## Reproduction
 
----
+See `docs/reproduction_checklist.md` for the full step-by-step guide. Server logs and browser console output for all three vectors are in `logs/`.
 
-## Evidence
+## Ethics
 
-Server logs and browser console outputs from all three attack vectors
-are in the `logs/` directory.
-
----
-
-## Reproduction Checklist
-
-See `docs/reproduction_checklist.md` for the full step-by-step guide.
-
----
-
-## Ethics Statement
-
-All testing was conducted on researcher-owned hardware on private home
-networks. No third-party systems, devices, or networks were targeted.
-The university guest WiFi was used only to confirm the attack surface
-was reachable in an institutional environment; no exploitation was
-performed on it.
-
----
+All testing was conducted on researcher-owned hardware on private home networks. No third-party system, account, or device was accessed. The university guest WiFi was used only to confirm the attack surface was reachable in an institutional environment; no exploitation was performed on it.
 
 ## Citation
 
-A formal citation (venue, year, DOI) will be added once the paper is
-assigned one. In the meantime:
-
 ```bibtex
 @misc{akingbola2026networkexposed,
-  title  = {Network-Exposed Configuration Attacks on LLM-Controlled Social Robots},
-  author = {Akingbola, Stanley and Ibrahim, Ugbede and Aung, Yan Lin and Le, Quang Dan and Yu, Hong Qing},
+  title       = {Network-Exposed Configuration Attacks on LLM-Controlled Social Robots},
+  author      = {Akingbola, Stanley and Ibrahim, Ugbede and Aung, Yan Lin and Le, Quang Dan and Yu, Hong Qing},
   institution = {University of Derby},
-  year   = {2026},
-  note   = {Preprint}
+  year        = {2026},
+  note        = {Preprint}
 }
 ```
 
----
-
 ## License
 
-The code in this repository is released for research and educational
-purposes only, consistent with ACM's policy on responsible disclosure
-and reproducible research.
+Released for research and educational use, consistent with ACM's policy on responsible disclosure and reproducible research.
