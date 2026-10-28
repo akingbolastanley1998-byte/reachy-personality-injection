@@ -1,18 +1,19 @@
-# Unauthenticated Personality Injection in Embodied AI
+# Network-Exposed Configuration Attacks on LLM-Controlled Social Robots
 
 **Proof-of-Concept Code and Research Artefacts**
 
-> Stanley Akingbola, Dan, Yan Lin Aung  
-> University of Derby, Derby, UK  
+> Stanley Akingbola, Ugbede Ibrahim, Yan Lin Aung, Quang Dan Le, Hong Qing Yu
+> University of Derby, Derby, UK
 >
+> Corresponding authors: Stanley Akingbola (akingbolastanley1998@gmail.com),
+> Yan Lin Aung (y.aung@derby.ac.uk)
 
 ## Overview
 
 This repository contains the proof-of-concept code, pipeline modification,
 and evidence artefacts for the paper:
 
-> **"Unauthenticated Personality Injection in Embodied AI:
-> A Configuration-Layer Attack on LLM-Controlled Social Robots"**
+> **"Network-Exposed Configuration Attacks on LLM-Controlled Social Robots"**
 
 We demonstrate that the Pollen Robotics Reachy Mini Lite exposes two
 entirely unauthenticated API endpoints controlling the robot's AI system
@@ -23,9 +24,11 @@ in under two seconds, with no credentials and no LLM interaction.
 **Vulnerability:**
 - CWE-306: Missing Authentication for a Critical Function
 - CWE-1327: Binding to an Unrestricted IP Address
-- CVSS v3.1 Base Score: 7.1 HIGH
+- CVSS v3.1 Base Score: 6.5 MEDIUM (`CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N`)
+- A second, distinct finding — cross-origin reachability of the `save`
+  endpoint (CWE-352) — is scored separately, also 6.5 MEDIUM.
 
-**Responsible Disclosure:**  
+**Responsible Disclosure:**
 Disclosed to Pollen Robotics via private GitHub Security Advisory before
 publication. Secondary notification sent to contact@pollen-robotics.com
 and security@huggingface.co.
@@ -35,17 +38,26 @@ and security@huggingface.co.
 ## Repository Structure
 
 ```
-├── exploit.py                    # Proof-of-concept exploit (all 3 vectors)
+├── exploit.py                    # Proof-of-concept exploit (V1/V2 vectors)
 ├── pipeline_patch/
 │   └── text_to_text.py           # Text-to-text pipeline modification for Phase 1 testing
 ├── phase1_prompts.json           # All 11 Phase 1 prompt injection prompts + results
+├── repository_survey.xlsx        # Full 59-repository classification (Section 8.1.2)
 ├── logs/
 │   ├── vector2_server_log.txt    # Server log from Vector 2 (remote Python)
-│   ├── csrf_test_log.txt         # Server log from partial CSRF test (Vector 3b)
+│   ├── csrf_test_log.txt         # Server log from the cross-origin CSRF test (Vector 3b)
 │   └── vector3_browser_console.txt  # Browser console output from Vector 3
 └── docs/
     └── reproduction_checklist.md # Step-by-step reproduction guide
 ```
+
+> **Note:** `repository_survey.xlsx` is referenced by the paper (Section 7,
+> Code Availability) but is not yet present in this repository. It needs to
+> be added before the arXiv version is finalised — see the paper's Section
+> 8.1.2 for what it must contain (the full 59-repository classification,
+> genuine/false-positive justification for every repository, and the
+> per-repository unauthenticated-endpoint finding for all 12 confirmed
+> genuine applications).
 
 ---
 
@@ -58,6 +70,13 @@ and security@huggingface.co.
   - `POST /api/v1/personalities/save`
   - `POST /api/v1/personalities/apply`
 - **Management interface:** Gradio on 0.0.0.0:7860 (all interfaces)
+
+> The pinned commit and `/api/v1` path prefix used throughout the paper
+> match this release exactly. The current public
+> `reachy-mini-conversation-app` repository has since changed its route
+> structure and no longer exposes this exact path or commit; the
+> vulnerable request-parsing logic is unchanged in substance as of the
+> v0.8.0 tag, but file and route layout should not be assumed identical.
 
 ---
 
@@ -113,15 +132,24 @@ curl -X POST http://localhost:8765/chat \
 
 ## Phase 1 Results Summary
 
-All 11 prompt injection attempts failed. See `phase1_prompts.json` for
-full details. The HuggingFace-hosted LLM resisted all attempts across:
+Eleven hand-written prompt-injection attempts were applied; none succeeded
+in producing unauthorised behaviour. This is reported in the paper as a
+**scoped manual control, not an automated adversarial evaluation** — see
+Section 6.1 of the paper. Full prompts and recorded outputs are in
+`phase1_prompts.json`.
 
 | Category | Prompts | Result |
 |---|---|---|
 | False identity acceptance | 3 | All REJECTED |
 | System prompt extraction | 3 | All REJECTED |
 | Safety override | 3 | All REJECTED |
-| Memory corruption | 2 | REJECTED / PARTIAL (session-bounded) |
+| Memory corruption (false operator-identity claim) | 2 | 1 REJECTED, 1 PARTIAL (claim stored in memory, no elevated behaviour in-session) |
+
+> The paper's methodology (Section 5.5) describes five prompt-injection
+> categories, including a distinct "unauthorised tool invocation (camera
+> access, memory writes)" category. That category is not broken out as a
+> separate top-level entry in `phase1_prompts.json` — worth checking
+> against the paper text before the artefact is finalised.
 
 ---
 
@@ -150,12 +178,16 @@ performed on it.
 
 ## Citation
 
+A formal citation (venue, year, DOI) will be added once the paper is
+assigned one. In the meantime:
+
 ```bibtex
-@inproceedings{akingbola2026personality,
-  title     = {Unauthenticated Personality Injection in Embodied AI:
-               A Configuration-Layer Attack on LLM-Controlled Social Robots},
-  author    = {Akingbola, Stanley and Dan and Aung, Yan Lin},
-  
+@misc{akingbola2026networkexposed,
+  title  = {Network-Exposed Configuration Attacks on LLM-Controlled Social Robots},
+  author = {Akingbola, Stanley and Ibrahim, Ugbede and Aung, Yan Lin and Le, Quang Dan and Yu, Hong Qing},
+  institution = {University of Derby},
+  year   = {2026},
+  note   = {Preprint}
 }
 ```
 

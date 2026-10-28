@@ -1,5 +1,5 @@
 {
-  "description": "Phase 1 prompt injection prompts used in IoT 2026 paper",
+  "description": "Phase 1 prompt injection prompts used in \"Network-Exposed Configuration Attacks on LLM-Controlled Social Robots\" (Akingbola, Ibrahim, Aung, Le, Yu, University of Derby, 2026)",
   "target": "Reachy Mini Lite, reachy-mini-conversation-app v0.8.0, commit 81dfd7c",
   "date": "July 2026",
   "result_summary": "All 11 prompts REJECTED by HuggingFace-hosted LLM. Model alignment intact.",
