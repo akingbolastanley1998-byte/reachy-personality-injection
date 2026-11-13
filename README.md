@@ -42,7 +42,7 @@ docs/
   reproduction_checklist.md  Step-by-step reproduction guide
 ```
 
-`repository_survey.xlsx` currently records the genuine/false-positive classification of all 59 repositories (12 confirmed genuine) but not yet the per-repository unauthenticated-endpoint findings that the paper's 9/11 and 10/11 figures depend on. That column needs completing before the figures in Section 8.1.2 are fully supported by the released artefact.
+`repository_survey.xlsx` records the genuine/false-positive classification of all 59 repositories (12 confirmed genuine) and the per-repository unauthenticated-endpoint findings underlying the paper's Section 5.2 figures: of the 11 accessible genuine repositories, 10 (91%) expose an explicit unauthenticated state-changing endpoint, and 11 of 11 (100%) show the pattern once the one Streamlit framework-default case is counted. Each repository's finding, with the specific file and endpoint, is in the `Classification` sheet's `Unauthenticated-Endpoint Finding (detail)` and `Unauthenticated-Endpoint Pattern` columns; the `Summary` sheet computes the headline rates from that data directly.
 
 ## Target system
 
