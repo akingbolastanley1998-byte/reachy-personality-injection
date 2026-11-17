@@ -128,4 +128,4 @@ All testing was conducted on researcher-owned hardware on private home networks.
 
 ## License
 
-Released for research and educational use, consistent with ACM's policy on responsible disclosure and reproducible research.
+This repository is released under the [MIT License](LICENSE). The paper itself is a preprint (arXiv), not yet an ACM publication; this repository's license will be revisited if the paper is accepted to a venue with its own artifact-licensing requirements.
